@@ -1,0 +1,17 @@
+[package]
+name = "sysaudit-cli"
+description = "CLI for Windows system auditor"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "sysaudit"
+path = "src/main.rs"
+
+[dependencies]
+sysaudit = { path = "../sysaudit" }
+clap = { version = "4.5", features = ["derive"] }
+serde_json = "1.0"
