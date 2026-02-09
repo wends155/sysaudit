@@ -119,12 +119,19 @@ impl SystemInfo {
 
         for (name, network) in &networks {
             for ip in network.ip_networks() {
+                // Format MAC address as hex (e.g., AC:B4:80:D6:59:1D)
+                let mac = network.mac_address();
+                let mac_str = format!(
+                    "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
+                    mac.0[0], mac.0[1], mac.0[2], mac.0[3], mac.0[4], mac.0[5]
+                );
+                
                 interfaces.push(NetworkInterface {
                     name: name.clone(),
                     ip_address: ip.addr,
                     subnet_mask: Some(format!("/{}", ip.prefix)),
                     gateway: None, // Would need additional API calls
-                    mac_address: Some(format!("{:?}", network.mac_address())),
+                    mac_address: Some(mac_str),
                 });
             }
         }

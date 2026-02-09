@@ -76,8 +76,8 @@ version-major:              ## Bump major version (0.1.0 -> 1.0.0)
 clean:                      ## Remove build artifacts
 	cargo clean
 
-run:                        ## Run CLI with debug build
-	cargo run -p sysaudit-cli -- $(ARGS)
+run:                        ## Run full audit with debug build
+	cargo run -p sysaudit-cli -- all
 
 run-release:                ## Run CLI with release build
 	cargo run -p sysaudit-cli --release -- $(ARGS)

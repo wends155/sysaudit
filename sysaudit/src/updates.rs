@@ -2,7 +2,7 @@
 //!
 //! Provides read-only access to installed Windows Updates via WMI.
 
-use crate::Error;
+
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use wmi::{COMLibrary, WMIConnection};
@@ -34,17 +34,29 @@ struct Win32QuickFixEngineering {
 impl WindowsUpdate {
     /// Collect all installed Windows Updates (READ-ONLY).
     ///
+    /// Returns empty vec if WMI query fails (graceful degradation).
+    ///
     /// # Example
     ///
     /// ```no_run
     /// use sysaudit::WindowsUpdate;
     ///
-    /// let updates = WindowsUpdate::collect_all().unwrap();
+    /// let updates = WindowsUpdate::collect_all();
     /// for update in updates {
     ///     println!("{}: {:?}", update.hotfix_id, update.description);
     /// }
     /// ```
-    pub fn collect_all() -> Result<Vec<Self>, Error> {
+    pub fn collect_all() -> Vec<Self> {
+        match Self::try_collect() {
+            Ok(updates) => updates,
+            Err(e) => {
+                eprintln!("Warning: Could not query Windows Updates: {}", e);
+                Vec::new()
+            }
+        }
+    }
+
+    fn try_collect() -> Result<Vec<Self>, crate::Error> {
         let com_con = COMLibrary::new()?;
         let wmi_con = WMIConnection::new(com_con)?;
 

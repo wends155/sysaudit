@@ -1,7 +1,10 @@
 //! Console output formatting.
 
 use crate::{Software, SystemInfo, WindowsUpdate, IndustrialSoftware};
-use comfy_table::{Table, presets::UTF8_FULL, modifiers::UTF8_ROUND_CORNERS};
+use comfy_table::{Table, presets::UTF8_FULL, modifiers::UTF8_ROUND_CORNERS, ContentArrangement};
+
+/// Max table width in characters
+const MAX_TABLE_WIDTH: u16 = 120;
 
 /// Console formatter for pretty output.
 pub struct ConsoleFormatter;
@@ -16,6 +19,8 @@ impl ConsoleFormatter {
         table
             .load_preset(UTF8_FULL)
             .apply_modifier(UTF8_ROUND_CORNERS)
+            .set_content_arrangement(ContentArrangement::Dynamic)
+            .set_width(MAX_TABLE_WIDTH)
             .set_header(vec!["SYSTEM INFORMATION", ""]);
         
         table.add_row(vec!["Computer Name", &info.computer_name]);
@@ -35,6 +40,8 @@ impl ConsoleFormatter {
             net_table
                 .load_preset(UTF8_FULL)
                 .apply_modifier(UTF8_ROUND_CORNERS)
+                .set_content_arrangement(ContentArrangement::Dynamic)
+                .set_width(MAX_TABLE_WIDTH)
                 .set_header(vec!["Interface", "IP Address", "Prefix", "MAC"]);
             
             for iface in &info.network_interfaces {
@@ -58,6 +65,8 @@ impl ConsoleFormatter {
         table
             .load_preset(UTF8_FULL)
             .apply_modifier(UTF8_ROUND_CORNERS)
+            .set_content_arrangement(ContentArrangement::Dynamic)
+            .set_width(MAX_TABLE_WIDTH)
             .set_header(vec!["Name", "Version", "Publisher", "Install Date", "Source"]);
         
         for sw in software {
@@ -79,6 +88,8 @@ impl ConsoleFormatter {
         table
             .load_preset(UTF8_FULL)
             .apply_modifier(UTF8_ROUND_CORNERS)
+            .set_content_arrangement(ContentArrangement::Dynamic)
+            .set_width(MAX_TABLE_WIDTH)
             .set_header(vec!["Vendor", "Product", "Version", "Install Path"]);
         
         for sw in software {
@@ -99,6 +110,8 @@ impl ConsoleFormatter {
         table
             .load_preset(UTF8_FULL)
             .apply_modifier(UTF8_ROUND_CORNERS)
+            .set_content_arrangement(ContentArrangement::Dynamic)
+            .set_width(MAX_TABLE_WIDTH)
             .set_header(vec!["HotFix ID", "Description", "Installed On", "Installed By"]);
         
         for update in updates {
@@ -113,3 +126,4 @@ impl ConsoleFormatter {
         format!("{}\nFound: {} updates", table, updates.len())
     }
 }
+

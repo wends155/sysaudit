@@ -161,7 +161,7 @@ fn cmd_industrial(vendors: Option<&str>, format: &str, output: Option<&std::path
 }
 
 fn cmd_updates(format: &str, output: Option<&std::path::Path>) -> Result<(), sysaudit::Error> {
-    let updates = WindowsUpdate::collect_all()?;
+    let updates = WindowsUpdate::collect_all();
 
     match format {
         "json" => println!("{}", serde_json::to_string_pretty(&updates)?),
@@ -194,7 +194,7 @@ fn cmd_all(output: Option<&std::path::Path>) -> Result<(), sysaudit::Error> {
     }
 
     // Updates
-    let updates = WindowsUpdate::collect_all()?;
+    let updates = WindowsUpdate::collect_all();
     println!("{}\n", ConsoleFormatter::format_updates(&updates));
 
     // Export to CSV if requested
