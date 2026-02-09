@@ -215,5 +215,17 @@ mod tests {
         assert_eq!(parse_install_date("invalid"), None);
         assert_eq!(parse_install_date("2024"), None);
         assert_eq!(parse_install_date(""), None);
+        assert_eq!(parse_install_date("20240230"), None); // Invalid day
+        assert_eq!(parse_install_date("20241301"), None); // Invalid month
+        assert_eq!(parse_install_date("ABCDEFGH"), None); // Non-numeric
+    }
+
+    #[test]
+    fn test_parse_install_date_future() {
+        // Technically valid format, logic doesn't reject future dates
+        assert_eq!(
+            parse_install_date("99991231"),
+            NaiveDate::from_ymd_opt(9999, 12, 31)
+        );
     }
 }

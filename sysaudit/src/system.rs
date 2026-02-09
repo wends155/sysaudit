@@ -139,3 +139,45 @@ impl SystemInfo {
         interfaces
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_collect_system_info() {
+        let info = SystemInfo::collect().expect("Should collect system info");
+        
+        // Basic sanity checks
+        assert!(!info.computer_name.is_empty(), "Computer name should not be empty");
+        assert!(!info.os_name.is_empty(), "OS name should not be empty");
+        assert!(!info.build_number.is_empty(), "Build number should not be empty");
+        assert!(!info.cpu_brand.is_empty(), "CPU brand should not be empty");
+    }
+
+    #[test]
+    fn test_network_interfaces_have_valid_mac() {
+        let info = SystemInfo::collect().expect("Should collect system info");
+        
+        for iface in &info.network_interfaces {
+            if let Some(mac) = &iface.mac_address {
+                // MAC should be in format XX:XX:XX:XX:XX:XX
+                assert!(mac.contains(':'), "MAC should contain colons: {}", mac);
+                assert_eq!(mac.len(), 17, "MAC should be 17 chars: {}", mac);
+            }
+        }
+    }
+
+    #[test]
+    fn test_build_number_format() {
+        let info = SystemInfo::collect().expect("Should collect system info");
+        
+        // Build number should contain digits
+        assert!(
+            info.build_number.chars().any(|c| c.is_ascii_digit()),
+            "Build number should contain digits: {}",
+            info.build_number
+        );
+    }
+}
+

@@ -127,3 +127,37 @@ impl ConsoleFormatter {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_format_software_table() {
+        let sw = Software {
+            name: "Test App".to_string(),
+            version: Some("1.0.0".to_string()),
+            publisher: Some("Test Corp".to_string()),
+            install_date: NaiveDate::from_ymd_opt(2024, 1, 1),
+            install_location: Some(PathBuf::from("C:\\App")),
+            source: crate::RegistrySource::LocalMachine64,
+        };
+
+        let output = ConsoleFormatter::format_software(&[sw]);
+        
+        assert!(output.contains("Test App"));
+        assert!(output.contains("1.0.0"));
+        assert!(output.contains("Test Corp"));
+        assert!(output.contains("2024-01-01"));
+        assert!(output.contains("Found: 1 items"));
+    }
+
+    #[test]
+    fn test_format_updates_empty() {
+        let output = ConsoleFormatter::format_updates(&[]);
+        assert!(output.contains("HotFix ID"));
+        assert!(output.contains("Found: 0 updates"));
+    }
+}
+
