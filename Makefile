@@ -82,8 +82,11 @@ run:                        ## Run full audit with debug build
 run-release:                ## Run CLI with release build
 	cargo run -p sysaudit-cli --release -- $(ARGS)
 
-check:                      ## Quick compile check without codegen
-	cargo check --workspace
+check:                      ## Run full test suite (test + lint + fmt)
+	sh scripts/test_all.sh
+
+verify:                     ## Run verification script (WMI compare)
+	powershell -ExecutionPolicy Bypass -File scripts/verify_output.ps1
 
 #───────────────────────────────────────────────────────────────
 # CI SIMULATION

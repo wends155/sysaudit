@@ -4,11 +4,11 @@
 //! installed software, and Windows Update patches.
 
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 use sysaudit::{
-    SystemInfo, SoftwareScanner, IndustrialScanner, WindowsUpdate, Vendor,
+    IndustrialScanner, SoftwareScanner, SystemInfo, Vendor, WindowsUpdate,
     output::{ConsoleFormatter, CsvExporter},
 };
-use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "sysaudit")]
@@ -81,8 +81,16 @@ fn main() {
 
     let result = match cli.command {
         Commands::System { format } => cmd_system(&format),
-        Commands::Software { filter, format, output } => cmd_software(filter.as_deref(), &format, output.as_deref()),
-        Commands::Industrial { vendors, format, output } => cmd_industrial(vendors.as_deref(), &format, output.as_deref()),
+        Commands::Software {
+            filter,
+            format,
+            output,
+        } => cmd_software(filter.as_deref(), &format, output.as_deref()),
+        Commands::Industrial {
+            vendors,
+            format,
+            output,
+        } => cmd_industrial(vendors.as_deref(), &format, output.as_deref()),
         Commands::Updates { format, output } => cmd_updates(&format, output.as_deref()),
         Commands::All { output } => cmd_all(output.as_deref()),
     };
@@ -104,7 +112,11 @@ fn cmd_system(format: &str) -> Result<(), sysaudit::Error> {
     Ok(())
 }
 
-fn cmd_software(filter: Option<&str>, format: &str, output: Option<&std::path::Path>) -> Result<(), sysaudit::Error> {
+fn cmd_software(
+    filter: Option<&str>,
+    format: &str,
+    output: Option<&std::path::Path>,
+) -> Result<(), sysaudit::Error> {
     let mut software = SoftwareScanner::new().scan()?;
 
     // Apply filter
@@ -126,7 +138,11 @@ fn cmd_software(filter: Option<&str>, format: &str, output: Option<&std::path::P
     Ok(())
 }
 
-fn cmd_industrial(vendors: Option<&str>, format: &str, output: Option<&std::path::Path>) -> Result<(), sysaudit::Error> {
+fn cmd_industrial(
+    vendors: Option<&str>,
+    format: &str,
+    output: Option<&std::path::Path>,
+) -> Result<(), sysaudit::Error> {
     let scanner = if let Some(v) = vendors {
         let vendor_list: Vec<Vendor> = v
             .split(',')

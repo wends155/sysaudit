@@ -5,7 +5,7 @@
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use windows_registry::{Key, LOCAL_MACHINE, CURRENT_USER};
+use windows_registry::{CURRENT_USER, Key, LOCAL_MACHINE};
 
 /// Industrial software vendor.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -129,11 +129,8 @@ impl IndustrialScanner {
         if let Ok(key) = LOCAL_MACHINE.open(r"SOFTWARE\WOW6432Node\Citect\SCADA Installs") {
             for version in key.keys().into_iter().flatten() {
                 if let Ok(subkey) = key.open(&version) {
-                    let install_path = subkey
-                        .get_string("DefaultINIPath")
-                        .ok()
-                        .map(PathBuf::from);
-                    
+                    let install_path = subkey.get_string("DefaultINIPath").ok().map(PathBuf::from);
+
                     result.push(IndustrialSoftware {
                         vendor: Vendor::Citect,
                         product: format!("AVEVA Plant SCADA {}", version),
@@ -248,18 +245,52 @@ impl IndustrialScanner {
             .map(PathBuf::from);
 
         // Pattern matching for industrial software
-        let vendor = if name_lower.contains("citect") || name_lower.contains("aveva") && name_lower.contains("scada") {
-            if self.vendors.contains(&Vendor::Citect) { Some(Vendor::Citect) } else { None }
+        let vendor = if name_lower.contains("citect")
+            || name_lower.contains("aveva") && name_lower.contains("scada")
+        {
+            if self.vendors.contains(&Vendor::Citect) {
+                Some(Vendor::Citect)
+            } else {
+                None
+            }
         } else if name_lower.contains("digifort") {
-            if self.vendors.contains(&Vendor::Digifort) { Some(Vendor::Digifort) } else { None }
-        } else if name_lower.contains("abb") && (name_lower.contains("automation") || name_lower.contains("builder")) {
-            if self.vendors.contains(&Vendor::ABB) { Some(Vendor::ABB) } else { None }
-        } else if name_lower.contains("rockwell") || name_lower.contains("allen-bradley") || name_lower.contains("studio 5000") {
-            if self.vendors.contains(&Vendor::Rockwell) { Some(Vendor::Rockwell) } else { None }
-        } else if name_lower.contains("simatic") || name_lower.contains("tia portal") || name_lower.contains("wincc") {
-            if self.vendors.contains(&Vendor::Siemens) { Some(Vendor::Siemens) } else { None }
+            if self.vendors.contains(&Vendor::Digifort) {
+                Some(Vendor::Digifort)
+            } else {
+                None
+            }
+        } else if name_lower.contains("abb")
+            && (name_lower.contains("automation") || name_lower.contains("builder"))
+        {
+            if self.vendors.contains(&Vendor::ABB) {
+                Some(Vendor::ABB)
+            } else {
+                None
+            }
+        } else if name_lower.contains("rockwell")
+            || name_lower.contains("allen-bradley")
+            || name_lower.contains("studio 5000")
+        {
+            if self.vendors.contains(&Vendor::Rockwell) {
+                Some(Vendor::Rockwell)
+            } else {
+                None
+            }
+        } else if name_lower.contains("simatic")
+            || name_lower.contains("tia portal")
+            || name_lower.contains("wincc")
+        {
+            if self.vendors.contains(&Vendor::Siemens) {
+                Some(Vendor::Siemens)
+            } else {
+                None
+            }
         } else if name_lower.contains("schneider") && name_lower.contains("electric") {
-            if self.vendors.contains(&Vendor::SchneiderElectric) { Some(Vendor::SchneiderElectric) } else { None }
+            if self.vendors.contains(&Vendor::SchneiderElectric) {
+                Some(Vendor::SchneiderElectric)
+            } else {
+                None
+            }
         } else {
             None
         };

@@ -42,7 +42,17 @@ fn test_cli_system_cmd() {
 fn test_cli_software_cmd() {
     // This might take longer, but good integration test
     let output = Command::new("cargo")
-        .args(&["run", "-p", "sysaudit-cli", "--", "software", "--format", "json", "--filter", "Microsoft"])
+        .args(&[
+            "run",
+            "-p",
+            "sysaudit-cli",
+            "--",
+            "software",
+            "--format",
+            "json",
+            "--filter",
+            "Microsoft",
+        ])
         .output()
         .expect("Failed to run CLI");
 

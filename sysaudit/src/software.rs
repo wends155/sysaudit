@@ -6,7 +6,7 @@ use crate::Error;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use windows_registry::{Key, LOCAL_MACHINE, CURRENT_USER};
+use windows_registry::{CURRENT_USER, Key, LOCAL_MACHINE};
 
 /// Registry source for software entry.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -97,7 +97,7 @@ impl SoftwareScanner {
 
         // HKLM 64-bit
         if let Ok(software) = self.scan_key(
-            &LOCAL_MACHINE,
+            LOCAL_MACHINE,
             r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
             RegistrySource::LocalMachine64,
         ) {
@@ -107,7 +107,7 @@ impl SoftwareScanner {
         // HKLM 32-bit (WOW6432Node)
         if self.include_32bit {
             if let Ok(software) = self.scan_key(
-                &LOCAL_MACHINE,
+                LOCAL_MACHINE,
                 r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
                 RegistrySource::LocalMachine32,
             ) {
@@ -118,7 +118,7 @@ impl SoftwareScanner {
         // HKCU
         if self.include_user_installs {
             if let Ok(software) = self.scan_key(
-                &CURRENT_USER,
+                CURRENT_USER,
                 r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
                 RegistrySource::CurrentUser,
             ) {
@@ -155,7 +155,7 @@ impl SoftwareScanner {
     fn parse_software_key(&self, key: &Key, source: RegistrySource) -> Option<Software> {
         // DisplayName is required
         let name = key.get_string("DisplayName").ok()?;
-        
+
         // Skip empty names
         if name.trim().is_empty() {
             return None;
@@ -190,11 +190,11 @@ fn parse_install_date(s: &str) -> Option<NaiveDate> {
     if s.len() != 8 {
         return None;
     }
-    
+
     let year: i32 = s[0..4].parse().ok()?;
     let month: u32 = s[4..6].parse().ok()?;
     let day: u32 = s[6..8].parse().ok()?;
-    
+
     NaiveDate::from_ymd_opt(year, month, day)
 }
 

@@ -4,11 +4,26 @@ Windows System & Software Auditor - A Rust library and CLI tool for auditing Win
 
 ## Features
 
-- **System Information**: OS version, build number, CPU, network interfaces (IP, subnet mask, gateway)
+- **System Information**: OS version, build, CPU (Brand, Cores, Freq), Memory (Total/Used), Manufacturer/Model, Network Interfaces
 - **Installed Software**: Enumerate from Windows Registry (HKLM/HKCU, 32/64-bit)
 - **Industrial Software Detection**: Citect/AVEVA, Digifort, ABB, Rockwell/Allen-Bradley, Siemens, Schneider Electric
 - **Windows Updates**: List installed hotfixes via WMI
 - **Output Formats**: Console tables, JSON, CSV
+
+## Example Output
+
+```text
+╭────────────────────┬─────────────────────────────────────╮
+│ SYSTEM INFORMATION ┆                                     │
+╞════════════════════╪═════════════════════════════════════╡
+│ Computer Name      ┆ mbl-wsalig                          │
+│ System             ┆ Dell Inc. / Latitude 3450           │
+│ OS                 ┆ Windows 11 (26200)                  │
+│ CPU                ┆ 13th Gen Intel(R) Core(TM) i5-1345U │
+│ CPU Cores          ┆ 10 (Phys) / 12 (Log)                │
+│ Memory             ┆ 13.04 GB / 15.69 GB (83.1%)         │
+╰────────────────────┴─────────────────────────────────────╯
+```
 
 ## Installation
 
@@ -81,7 +96,8 @@ fn main() -> Result<(), sysaudit::Error> {
 make build      # Debug build
 make release    # Release build
 make test       # Run tests
-make lint       # Run clippy
+make check      # Run full test suite (test + lint + fmt)
+make verify     # Run verification script (WMI compare)
 make docs       # Generate docs
 ```
 

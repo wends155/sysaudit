@@ -26,14 +26,14 @@
 //! ```
 
 pub mod error;
-pub mod system;
-pub mod software;
 pub mod industrial;
-pub mod updates;
 pub mod output;
+pub mod software;
+pub mod system;
+pub mod updates;
 
 pub use error::Error;
-pub use system::{SystemInfo, NetworkInterface};
-pub use software::{Software, SoftwareScanner, RegistrySource};
-pub use industrial::{IndustrialSoftware, IndustrialScanner, Vendor};
+pub use industrial::{IndustrialScanner, IndustrialSoftware, Vendor};
+pub use software::{RegistrySource, Software, SoftwareScanner};
+pub use system::{NetworkInterface, SystemInfo};
 pub use updates::WindowsUpdate;

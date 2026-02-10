@@ -36,10 +36,28 @@ pub struct SystemInfo {
     pub computer_name: String,
     /// Domain name if joined
     pub domain: Option<String>,
-    /// CPU brand string
-    pub cpu_brand: String,
+    /// CPU brand string (renamed from cpu_brand)
+    pub cpu_info: String,
     /// Network interfaces with IP, mask, gateway
     pub network_interfaces: Vec<NetworkInterface>,
+
+    // --- Phase 2: Enhanced Metrics ---
+    /// System Manufacturer (e.g., "Dell Inc.")
+    pub manufacturer: Option<String>,
+    /// System Model (e.g., "OptiPlex 9020")
+    pub model: Option<String>,
+    /// Physical core count
+    pub cpu_cores_physical: Option<usize>,
+    /// Logical core count
+    pub cpu_cores_logical: Option<usize>,
+    /// CPU frequency in MHz
+    pub cpu_frequency_mhz: u64,
+    /// Total RAM in bytes
+    pub memory_total: u64,
+    /// Used RAM in bytes
+    pub memory_used: u64,
+    /// Free RAM in bytes
+    pub memory_free: u64,
 }
 
 impl SystemInfo {
@@ -70,12 +88,23 @@ impl SystemInfo {
         // Get domain from registry
         let domain = Self::get_domain();
 
-        // Get CPU brand
-        let cpu_brand = sys
+        // Get CPU details
+        let cpu_info = sys
             .cpus()
             .first()
             .map(|cpu| cpu.brand().to_string())
-            .unwrap_or_else(|| "Unknown".to_string());
+            .unwrap_or_default();
+        let cpu_cores_physical = sys.physical_core_count();
+        let cpu_cores_logical = Some(sys.cpus().len());
+        let cpu_frequency_mhz = sys.cpus().first().map(|cpu| cpu.frequency()).unwrap_or(0);
+
+        // Get Memory details
+        let memory_total = sys.total_memory();
+        let memory_used = sys.used_memory();
+        let memory_free = sys.free_memory();
+
+        // Get Manufacturer/Model via WMI
+        let (manufacturer, model) = Self::get_system_model_info();
 
         // Get network interfaces
         let network_interfaces = Self::get_network_interfaces();
@@ -86,9 +115,51 @@ impl SystemInfo {
             build_number,
             computer_name,
             domain,
-            cpu_brand,
+            cpu_info,
             network_interfaces,
+            manufacturer,
+            model,
+            cpu_cores_physical,
+            cpu_cores_logical,
+            cpu_frequency_mhz,
+            memory_total,
+            memory_used,
+            memory_free,
         })
+    }
+
+    fn get_system_model_info() -> (Option<String>, Option<String>) {
+        use serde::Deserialize;
+        use wmi::{COMLibrary, WMIConnection};
+
+        #[derive(Deserialize)]
+        #[serde(rename = "Win32_ComputerSystem")]
+        #[serde(rename_all = "PascalCase")]
+        struct Win32ComputerSystem {
+            manufacturer: Option<String>,
+            model: Option<String>,
+        }
+
+        let com_con = match COMLibrary::new() {
+            Ok(c) => c,
+            Err(_) => return (None, None),
+        };
+
+        let wmi_con = match WMIConnection::new(com_con) {
+            Ok(c) => c,
+            Err(_) => return (None, None),
+        };
+
+        match wmi_con.query::<Win32ComputerSystem>() {
+            Ok(results) => {
+                if let Some(sys) = results.first() {
+                    (sys.manufacturer.clone(), sys.model.clone())
+                } else {
+                    (None, None)
+                }
+            }
+            Err(_) => (None, None),
+        }
     }
 
     fn get_build_number() -> Result<String, Error> {
@@ -125,7 +196,7 @@ impl SystemInfo {
                     "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
                     mac.0[0], mac.0[1], mac.0[2], mac.0[3], mac.0[4], mac.0[5]
                 );
-                
+
                 interfaces.push(NetworkInterface {
                     name: name.clone(),
                     ip_address: ip.addr,
@@ -147,18 +218,24 @@ mod tests {
     #[test]
     fn test_collect_system_info() {
         let info = SystemInfo::collect().expect("Should collect system info");
-        
+
         // Basic sanity checks
-        assert!(!info.computer_name.is_empty(), "Computer name should not be empty");
+        assert!(
+            !info.computer_name.is_empty(),
+            "Computer name should not be empty"
+        );
         assert!(!info.os_name.is_empty(), "OS name should not be empty");
-        assert!(!info.build_number.is_empty(), "Build number should not be empty");
-        assert!(!info.cpu_brand.is_empty(), "CPU brand should not be empty");
+        assert!(
+            !info.build_number.is_empty(),
+            "Build number should not be empty"
+        );
+        assert!(!info.cpu_info.is_empty(), "CPU info should not be empty");
     }
 
     #[test]
     fn test_network_interfaces_have_valid_mac() {
         let info = SystemInfo::collect().expect("Should collect system info");
-        
+
         for iface in &info.network_interfaces {
             if let Some(mac) = &iface.mac_address {
                 // MAC should be in format XX:XX:XX:XX:XX:XX
@@ -171,7 +248,7 @@ mod tests {
     #[test]
     fn test_build_number_format() {
         let info = SystemInfo::collect().expect("Should collect system info");
-        
+
         // Build number should contain digits
         assert!(
             info.build_number.chars().any(|c| c.is_ascii_digit()),
@@ -180,4 +257,3 @@ mod tests {
         );
     }
 }
-

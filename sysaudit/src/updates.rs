@@ -2,7 +2,6 @@
 //!
 //! Provides read-only access to installed Windows Updates via WMI.
 
-
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use wmi::{COMLibrary, WMIConnection};
@@ -66,13 +65,16 @@ impl WindowsUpdate {
             .into_iter()
             .filter_map(|r| {
                 let hotfix_id = r.hot_fix_id?;
-                
+
                 // Skip empty hotfix IDs
                 if hotfix_id.trim().is_empty() {
                     return None;
                 }
 
-                let installed_on = r.installed_on.as_ref().and_then(|s| parse_wmi_date(s.as_str()));
+                let installed_on = r
+                    .installed_on
+                    .as_ref()
+                    .and_then(|s| parse_wmi_date(s.as_str()));
 
                 Some(WindowsUpdate {
                     hotfix_id,
@@ -100,11 +102,8 @@ fn parse_wmi_date(s: &str) -> Option<NaiveDate> {
     }
     // YYYYMMDD
     if s.len() == 8 {
-        if let (Ok(year), Ok(month), Ok(day)) = (
-            s[0..4].parse(),
-            s[4..6].parse(),
-            s[6..8].parse(),
-        ) {
+        if let (Ok(year), Ok(month), Ok(day)) = (s[0..4].parse(), s[4..6].parse(), s[6..8].parse())
+        {
             return NaiveDate::from_ymd_opt(year, month, day);
         }
     }
