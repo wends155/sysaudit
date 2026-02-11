@@ -26,12 +26,13 @@
 ## 📍 Current State (Recursive Summary)
 
 ### 🛠️ Recent Changes (Last 3 Cycles)
-1.  **2026-02-11/Documentation:** Updated `context.md` to match `sysaudit` project reality.
-2.  **2026-02-11/MCP Integration:** Successfully verified `rust-mcp-server` tools (`cargo-build`, `cargo-clippy`, `cargo-fmt`) against the workspace.
+1.  **2026-02-11/Publication:** Published `sysaudit` v0.1.0 to crates.io after full quality gate passing.
+2.  **2026-02-11/Documentation:** Updated `context.md` and README files for publication readiness.
+3.  **2026-02-11/MCP Integration:** Verified `rust-mcp-server` tools against the workspace.
 
 ### 🧩 Active Components & APIs
-* `sysaudit/`: Core logic (system info, software/industrial scans, updates).
-* `sysaudit-cli/`: Command-line interface for the auditor.
+* `sysaudit/`: Core library (Published v0.1.0).
+* `sysaudit-cli/`: CLI consumer (Local-only).
 
 ### 🛠️ Maintenance & Scripts
 * `Makefile`: Central entry point for `check`, `run`, `test`, `build`, and `verify`.
@@ -42,7 +43,7 @@
 
 ### 💻 Shell & Tooling Quirks
 * **PowerShell `&&` Limitation:** The default shell on this host (PowerShell) does not support `&&` as a statement separator.
-    * **Solution:** Run commands sequentially in separate tool calls. Do not use `&&` in `run_command` tools.
+    * **Solution:** Run commands sequentially in separate tool calls. **NEVER** use `&&` in `run_command` tools on Windows hosts; use `;` or separate tool calls instead.
 
 ---
 

@@ -18,6 +18,8 @@
     *   [Step details]
 3.  **Phase 3: Verification (Executor)**
     *   [Step details]
+4.  **Important Constraint:**
+    *   ⚠️ **No `&&` in Commands:** Because the host uses PowerShell, `&&` is not a valid separator. Run steps sequentially.
 
 ## 🧪 Quality Gate
 *   **Linting:** `make check`
