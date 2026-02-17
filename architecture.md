@@ -12,6 +12,7 @@
 | **Purpose** | High-performance Rust library and CLI for **read-only** auditing of Windows systems: software inventory, hardware info, update patches, and industrial software detection. |
 | **Repository** | <https://github.com/wends155/sysaudit> |
 | **License** | MIT |
+| **Last Audited** | 2025-02-17 |
 
 ---
 

@@ -3,7 +3,7 @@ use std::process::Command;
 #[test]
 fn test_cli_help() {
     let output = Command::new("cargo")
-        .args(&["run", "-p", "sysaudit-cli", "--", "--help"])
+        .args(["run", "-p", "sysaudit-cli", "--", "--help"])
         .output()
         .expect("Failed to run CLI");
 
@@ -16,7 +16,7 @@ fn test_cli_help() {
 #[test]
 fn test_cli_invalid_arg() {
     let output = Command::new("cargo")
-        .args(&["run", "-p", "sysaudit-cli", "--", "--invalid-flag"])
+        .args(["run", "-p", "sysaudit-cli", "--", "--invalid-flag"])
         .output()
         .expect("Failed to run CLI");
 
@@ -28,7 +28,7 @@ fn test_cli_invalid_arg() {
 #[test]
 fn test_cli_system_cmd() {
     let output = Command::new("cargo")
-        .args(&["run", "-p", "sysaudit-cli", "--", "system"])
+        .args(["run", "-p", "sysaudit-cli", "--", "system"])
         .output()
         .expect("Failed to run CLI");
 
@@ -42,7 +42,7 @@ fn test_cli_system_cmd() {
 fn test_cli_software_cmd() {
     // This might take longer, but good integration test
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "-p",
             "sysaudit-cli",

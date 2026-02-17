@@ -98,7 +98,10 @@ impl IndustrialScanner {
     /// }
     /// ```
     pub fn scan(&self) -> Result<Vec<IndustrialSoftware>, Error> {
-        tracing::info!("Scanning for industrial software (vendors: {:?})", self.vendors);
+        tracing::info!(
+            "Scanning for industrial software (vendors: {:?})",
+            self.vendors
+        );
         let mut result = Vec::new();
 
         for vendor in &self.vendors {
@@ -436,12 +439,8 @@ mod tests {
     fn test_classify_preserves_metadata() {
         let v = all_vendors();
         let path = PathBuf::from(r"C:\Program Files\Citect");
-        let result = classify_industrial(
-            "Citect SCADA",
-            Some("8.1.0".into()),
-            Some(path.clone()),
-            &v,
-        );
+        let result =
+            classify_industrial("Citect SCADA", Some("8.1.0".into()), Some(path.clone()), &v);
         let sw = result.unwrap();
         assert_eq!(sw.version.as_deref(), Some("8.1.0"));
         assert_eq!(sw.install_path, Some(path));
