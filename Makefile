@@ -86,7 +86,7 @@ check:                      ## Run full test suite (test + lint + fmt)
 	sh scripts/test_all.sh
 
 verify:                     ## Run verification script (WMI compare)
-	powershell -ExecutionPolicy Bypass -File scripts/verify_output.ps1
+	pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/verify_output.ps1
 
 #───────────────────────────────────────────────────────────────
 # CI SIMULATION

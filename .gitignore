@@ -7,3 +7,6 @@
 *.swp
 *.ds_store
 Thumbs.db
+
+# Gemini rules
+GEMINI.md
