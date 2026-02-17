@@ -98,6 +98,7 @@ impl IndustrialScanner {
     /// }
     /// ```
     pub fn scan(&self) -> Result<Vec<IndustrialSoftware>, Error> {
+        tracing::info!("Scanning for industrial software (vendors: {:?})", self.vendors);
         let mut result = Vec::new();
 
         for vendor in &self.vendors {
@@ -236,7 +237,6 @@ impl IndustrialScanner {
     }
 
     fn match_industrial(&self, name: &str, key: &Key) -> Option<IndustrialSoftware> {
-        let name_lower = name.to_lowercase();
         let version = key.get_string("DisplayVersion").ok();
         let install_path = key
             .get_string("InstallLocation")
@@ -244,62 +244,207 @@ impl IndustrialScanner {
             .filter(|s| !s.is_empty())
             .map(PathBuf::from);
 
-        // Pattern matching for industrial software
-        let vendor = if name_lower.contains("citect")
-            || name_lower.contains("aveva") && name_lower.contains("scada")
-        {
-            if self.vendors.contains(&Vendor::Citect) {
-                Some(Vendor::Citect)
-            } else {
-                None
-            }
-        } else if name_lower.contains("digifort") {
-            if self.vendors.contains(&Vendor::Digifort) {
-                Some(Vendor::Digifort)
-            } else {
-                None
-            }
-        } else if name_lower.contains("abb")
-            && (name_lower.contains("automation") || name_lower.contains("builder"))
-        {
-            if self.vendors.contains(&Vendor::ABB) {
-                Some(Vendor::ABB)
-            } else {
-                None
-            }
-        } else if name_lower.contains("rockwell")
-            || name_lower.contains("allen-bradley")
-            || name_lower.contains("studio 5000")
-        {
-            if self.vendors.contains(&Vendor::Rockwell) {
-                Some(Vendor::Rockwell)
-            } else {
-                None
-            }
-        } else if name_lower.contains("simatic")
-            || name_lower.contains("tia portal")
-            || name_lower.contains("wincc")
-        {
-            if self.vendors.contains(&Vendor::Siemens) {
-                Some(Vendor::Siemens)
-            } else {
-                None
-            }
-        } else if name_lower.contains("schneider") && name_lower.contains("electric") {
-            if self.vendors.contains(&Vendor::SchneiderElectric) {
-                Some(Vendor::SchneiderElectric)
-            } else {
-                None
-            }
+        classify_industrial(name, version, install_path, &self.vendors)
+    }
+}
+
+/// Pure classification logic for industrial software (fully testable).
+fn classify_industrial(
+    name: &str,
+    version: Option<String>,
+    install_path: Option<PathBuf>,
+    vendors: &[Vendor],
+) -> Option<IndustrialSoftware> {
+    let name_lower = name.to_lowercase();
+
+    // Pattern matching for industrial software
+    let vendor = if name_lower.contains("citect")
+        || (name_lower.contains("aveva") && name_lower.contains("scada"))
+    {
+        if vendors.contains(&Vendor::Citect) {
+            Some(Vendor::Citect)
         } else {
             None
-        };
+        }
+    } else if name_lower.contains("digifort") {
+        if vendors.contains(&Vendor::Digifort) {
+            Some(Vendor::Digifort)
+        } else {
+            None
+        }
+    } else if name_lower.contains("abb")
+        && (name_lower.contains("automation") || name_lower.contains("builder"))
+    {
+        if vendors.contains(&Vendor::ABB) {
+            Some(Vendor::ABB)
+        } else {
+            None
+        }
+    } else if name_lower.contains("rockwell")
+        || name_lower.contains("allen-bradley")
+        || name_lower.contains("studio 5000")
+    {
+        if vendors.contains(&Vendor::Rockwell) {
+            Some(Vendor::Rockwell)
+        } else {
+            None
+        }
+    } else if name_lower.contains("simatic")
+        || name_lower.contains("tia portal")
+        || name_lower.contains("wincc")
+    {
+        if vendors.contains(&Vendor::Siemens) {
+            Some(Vendor::Siemens)
+        } else {
+            None
+        }
+    } else if name_lower.contains("schneider") && name_lower.contains("electric") {
+        if vendors.contains(&Vendor::SchneiderElectric) {
+            Some(Vendor::SchneiderElectric)
+        } else {
+            None
+        }
+    } else {
+        None
+    }?;
 
-        vendor.map(|v| IndustrialSoftware {
-            vendor: v,
-            product: name.to_string(),
-            version,
-            install_path,
-        })
+    Some(IndustrialSoftware {
+        vendor,
+        product: name.to_string(),
+        version,
+        install_path,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn all_vendors() -> Vec<Vendor> {
+        vec![
+            Vendor::Citect,
+            Vendor::Digifort,
+            Vendor::ABB,
+            Vendor::Rockwell,
+            Vendor::Siemens,
+            Vendor::SchneiderElectric,
+        ]
+    }
+
+    #[test]
+    fn test_vendor_display() {
+        assert_eq!(Vendor::Citect.to_string(), "Citect");
+        assert_eq!(Vendor::ABB.to_string(), "ABB");
+        assert_eq!(Vendor::SchneiderElectric.to_string(), "Schneider Electric");
+        assert_eq!(Vendor::Other("Custom".into()).to_string(), "Custom");
+    }
+
+    #[test]
+    fn test_all_vendors_constructor() {
+        let scanner = IndustrialScanner::all_vendors();
+        assert_eq!(scanner.vendors.len(), 6);
+    }
+
+    #[test]
+    fn test_classify_citect() {
+        let v = all_vendors();
+        let result = classify_industrial("Citect SCADA 2023", Some("8.0".into()), None, &v);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().vendor, Vendor::Citect);
+    }
+
+    #[test]
+    fn test_classify_aveva_scada() {
+        let v = all_vendors();
+        let result = classify_industrial("AVEVA Plant SCADA 2023", None, None, &v);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().vendor, Vendor::Citect);
+    }
+
+    #[test]
+    fn test_classify_aveva_without_scada_no_match() {
+        let v = all_vendors();
+        // "aveva" alone without "scada" should NOT match
+        let result = classify_industrial("AVEVA Edge 2024", None, None, &v);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_classify_rockwell() {
+        let v = all_vendors();
+        for name in [
+            "Rockwell Automation",
+            "Allen-Bradley Tools",
+            "Studio 5000 Logix",
+        ] {
+            let result = classify_industrial(name, None, None, &v);
+            assert!(result.is_some(), "should match: {}", name);
+            assert_eq!(result.unwrap().vendor, Vendor::Rockwell);
+        }
+    }
+
+    #[test]
+    fn test_classify_siemens() {
+        let v = all_vendors();
+        for name in ["SIMATIC WinCC", "TIA Portal V18", "WinCC Unified"] {
+            let result = classify_industrial(name, None, None, &v);
+            assert!(result.is_some(), "should match: {}", name);
+            assert_eq!(result.unwrap().vendor, Vendor::Siemens);
+        }
+    }
+
+    #[test]
+    fn test_classify_abb() {
+        let v = all_vendors();
+        let result = classify_industrial("ABB Automation Builder 2.x", None, None, &v);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().vendor, Vendor::ABB);
+    }
+
+    #[test]
+    fn test_classify_abb_no_keyword_no_match() {
+        let v = all_vendors();
+        // "abb" alone without "automation" or "builder" should NOT match
+        let result = classify_industrial("ABB Robot Studio", None, None, &v);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_classify_schneider() {
+        let v = all_vendors();
+        let result = classify_industrial("Schneider Electric EcoStruxure", None, None, &v);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().vendor, Vendor::SchneiderElectric);
+    }
+
+    #[test]
+    fn test_classify_unrecognized_no_match() {
+        let v = all_vendors();
+        let result = classify_industrial("Microsoft Visual Studio", None, None, &v);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_classify_vendor_not_in_filter() {
+        // Only scanning for Citect — Rockwell should not match
+        let v = vec![Vendor::Citect];
+        let result = classify_industrial("Rockwell Automation", None, None, &v);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_classify_preserves_metadata() {
+        let v = all_vendors();
+        let path = PathBuf::from(r"C:\Program Files\Citect");
+        let result = classify_industrial(
+            "Citect SCADA",
+            Some("8.1.0".into()),
+            Some(path.clone()),
+            &v,
+        );
+        let sw = result.unwrap();
+        assert_eq!(sw.version.as_deref(), Some("8.1.0"));
+        assert_eq!(sw.install_path, Some(path));
+        assert_eq!(sw.product, "Citect SCADA");
     }
 }

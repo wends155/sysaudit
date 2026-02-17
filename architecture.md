@@ -37,6 +37,9 @@ sysaudit/                      ← workspace root
 ├── architecture.md            ← This file (What we are building)
 ├── context.md                 ← History & decisions (Why we built it)
 ├── DATA_SOURCES.md            ← Windows data source reference
+├── README.md                  ← Project documentation
+├── LICENSE                    ← MIT License
+├── .gitignore                 ← Git exclusion rules
 ├── scripts/
 │   ├── test_all.sh            ← Quality gate (lint + test + fmt)
 │   ├── run_cli_tests.sh       ← CLI integration test runner
@@ -85,12 +88,19 @@ sysaudit/                      ← workspace root
 
 ### Verification Script (`scripts/test_all.sh`)
 
-```bash
-#!/bin/bash
+```sh
+#!/bin/sh
 set -e
-echo "Running tests..."    && cargo test --workspace
-echo "Running clippy..."   && cargo clippy --workspace -- -D warnings
-echo "Checking formatting..." && cargo fmt -- --check
+
+echo "Running tests..."
+cargo test --workspace --all-features
+
+echo "Running clippy..."
+cargo clippy --workspace --all-targets -- -D warnings
+
+echo "Checking formatting..."
+cargo fmt -- --check
+
 echo "All checks passed!"
 ```
 
@@ -133,17 +143,21 @@ pub enum Error {
 
 | Aspect | Current State |
 |:---|:---|
-| **Framework** | None (no structured logging crate) |
-| **Warnings** | `eprintln!` for non-fatal failures (e.g., WMI unavailable) |
-| **Error Output** | CLI prints `Error: {e}` to stderr and exits with code 1 |
-| **Future Plan** | Adopt `tracing` crate for structured, leveled logging |
+| **Framework** | `tracing` (instrumentation) + `tracing-subscriber` (CLI output) |
+| **Warnings** | `tracing::warn!` for non-fatal failures (e.g., WMI unavailable) |
+| **Error Output** | CLI prints structured error events and exits with code 1 |
 
-**Log levels** (per `GEMINI.md` standards) are not yet implemented. When `tracing` is adopted:
-- **Error:** Registry/WMI/IO failures
-- **Warn:** Graceful degradation paths (empty WMI results)
-- **Info:** Audit milestones (scan start/complete, export paths)
-- **Debug:** Individual registry key reads, WMI query details
-- **Trace:** Raw data from each scanned entry
+**Log levels and filtering:**
+- **Debug builds:** Default filter is `debug` (shows `DEBUG`, `INFO`, `WARN`, `ERROR`)
+- **Release builds:** Default filter is `error` (shows `ERROR` only)
+- **Override:** Use `RUST_LOG` environment variable to override at runtime.
+
+**Leveled usage:**
+- **Error:** Critical command failure in CLI
+- **Warn:** Graceful degradation paths (e.g., WMI query failure in `updates.rs`)
+- **Info:** High-level milestones (e.g., "Starting software scan")
+- **Debug:** Internal state details, found item counts
+- **Trace:** Not yet used (reserved for raw byte/registry data)
 
 ---
 
@@ -162,6 +176,7 @@ pub enum Error {
 - `sysaudit/src/system.rs` → `mod tests` (3 tests: system info, MAC format, build number)
 - `sysaudit/src/software.rs` → `mod tests` (3 tests: date parsing valid/invalid/future)
 - `sysaudit/src/updates.rs` → `mod tests` (2 tests: WMI date formats)
+- `sysaudit/src/industrial.rs` → No unit tests (Logic tested via CLI integration tests)
 
 > [!NOTE]
 > All tests require a live Windows machine with registry and WMI access. Doc tests use `no_run` to avoid CI failures on non-Windows platforms.
@@ -212,6 +227,8 @@ pub fn collect() -> Result<Self, Error> { ... }
 | `csv` | 1.3 | CSV export |
 | `comfy-table` | 7.1 | Console table formatting |
 | `clap` | 4.5 | CLI argument parsing (`derive` feature, `sysaudit-cli` only) |
+| `tracing` | 0.1 | Structured logging instrumentation |
+| `tracing-subscriber` | 0.3 | CLI log output formatter (`env-filter` feature) |
 | `tokio` | 1 | Dev-only: async test runtime |
 
 ### Windows Data Sources (from `DATA_SOURCES.md`)
@@ -330,5 +347,4 @@ graph LR
 | **No async** | Library is fully synchronous; WMI/COM calls may block the calling thread. |
 | **Industrial vendor list** | Hardcoded in `industrial.rs`; adding new vendors requires code changes. |
 | **Gateway info** | `NetworkInterface.gateway` is always `None` (sysinfo API limitation). |
-| **No structured logging** | Only `eprintln!` for warnings; no leveled/structured logging framework. |
 | **No mocking** | Tests require a live Windows machine; no mock infrastructure for registry/WMI. |

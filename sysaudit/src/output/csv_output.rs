@@ -82,3 +82,69 @@ impl CsvExporter {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{RegistrySource, Vendor};
+    use chrono::NaiveDate;
+    use std::path::PathBuf;
+
+    fn temp_csv(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!("sysaudit_test_{}.csv", name))
+    }
+
+    #[test]
+    fn test_export_software_csv() {
+        let path = temp_csv("software");
+        let sw = vec![Software {
+            name: "TestApp".into(),
+            version: Some("1.0".into()),
+            publisher: Some("Acme".into()),
+            install_date: NaiveDate::from_ymd_opt(2024, 1, 15),
+            install_location: Some(PathBuf::from(r"C:\App")),
+            source: RegistrySource::LocalMachine64,
+        }];
+
+        CsvExporter::export_software(&sw, &path).unwrap();
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.contains("TestApp"));
+        assert!(content.contains("1.0"));
+        assert!(content.contains("Acme"));
+        std::fs::remove_file(&path).ok();
+    }
+
+    #[test]
+    fn test_export_updates_csv() {
+        let path = temp_csv("updates");
+        let updates = vec![WindowsUpdate {
+            hotfix_id: "KB5034441".into(),
+            description: Some("Security Update".into()),
+            installed_on: NaiveDate::from_ymd_opt(2024, 1, 15),
+            installed_by: Some("NT AUTHORITY".into()),
+        }];
+
+        CsvExporter::export_updates(&updates, &path).unwrap();
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.contains("KB5034441"));
+        assert!(content.contains("Security Update"));
+        std::fs::remove_file(&path).ok();
+    }
+
+    #[test]
+    fn test_export_industrial_csv() {
+        let path = temp_csv("industrial");
+        let sw = vec![IndustrialSoftware {
+            vendor: Vendor::Rockwell,
+            product: "Studio 5000".into(),
+            version: Some("33.0".into()),
+            install_path: None,
+        }];
+
+        CsvExporter::export_industrial(&sw, &path).unwrap();
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.contains("Rockwell"));
+        assert!(content.contains("Studio 5000"));
+        std::fs::remove_file(&path).ok();
+    }
+}

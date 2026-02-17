@@ -77,6 +77,21 @@ enum Commands {
 }
 
 fn main() {
+    // Initialize structured logging.
+    // Debug builds: show DEBUG and above.
+    // Release builds: show ERROR and above only.
+    let filter = if cfg!(debug_assertions) {
+        tracing_subscriber::EnvFilter::new("debug")
+    } else {
+        tracing_subscriber::EnvFilter::new("error")
+    };
+
+    tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
+        .with_env_filter(filter)
+        .with_target(false)
+        .init();
+
     let cli = Cli::parse();
 
     let result = match cli.command {
@@ -96,7 +111,7 @@ fn main() {
     };
 
     if let Err(e) = result {
-        eprintln!("Error: {}", e);
+        tracing::error!(error = %e, "Command failed");
         std::process::exit(1);
     }
 }

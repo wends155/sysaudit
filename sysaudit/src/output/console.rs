@@ -219,4 +219,49 @@ mod tests {
         assert!(output.contains("HotFix ID"));
         assert!(output.contains("Found: 0 updates"));
     }
+
+    #[test]
+    fn test_format_system_info() {
+        let info = SystemInfo {
+            os_name: "Windows 11 Pro".into(),
+            os_version: "23H2".into(),
+            build_number: "22631.3007".into(),
+            computer_name: "TEST-PC".into(),
+            domain: Some("contoso.local".into()),
+            cpu_info: "Intel i7-9700".into(),
+            network_interfaces: vec![],
+            manufacturer: Some("Dell Inc.".into()),
+            model: Some("OptiPlex 7090".into()),
+            cpu_cores_physical: Some(8),
+            cpu_cores_logical: Some(8),
+            cpu_frequency_mhz: 3000,
+            memory_total: 17_179_869_184, // 16 GB
+            memory_used: 8_589_934_592,   // 8 GB
+            memory_free: 8_589_934_592,
+        };
+
+        let output = ConsoleFormatter::format_system_info(&info);
+        assert!(output.contains("TEST-PC"));
+        assert!(output.contains("Windows 11 Pro"));
+        assert!(output.contains("22631.3007"));
+        assert!(output.contains("Dell Inc."));
+        assert!(output.contains("contoso.local"));
+    }
+
+    #[test]
+    fn test_format_industrial_table() {
+        use crate::Vendor;
+        let sw = IndustrialSoftware {
+            vendor: Vendor::Citect,
+            product: "AVEVA Plant SCADA 2023".into(),
+            version: Some("8.0".into()),
+            install_path: Some(PathBuf::from(r"C:\Citect")),
+        };
+
+        let output = ConsoleFormatter::format_industrial(&[sw]);
+        assert!(output.contains("Citect"));
+        assert!(output.contains("AVEVA Plant SCADA 2023"));
+        assert!(output.contains("8.0"));
+        assert!(output.contains("Found: 1 industrial"));
+    }
 }

@@ -46,10 +46,14 @@ impl WindowsUpdate {
     /// }
     /// ```
     pub fn collect_all() -> Vec<Self> {
+        tracing::info!("Collecting all Windows Updates");
         match Self::try_collect() {
-            Ok(updates) => updates,
+            Ok(updates) => {
+                tracing::debug!("Found {} updates", updates.len());
+                updates
+            }
             Err(e) => {
-                eprintln!("Warning: Could not query Windows Updates: {}", e);
+                tracing::warn!(error = %e, "Could not query Windows Updates");
                 Vec::new()
             }
         }
@@ -128,5 +132,25 @@ mod tests {
             parse_wmi_date("2024-01-15"),
             NaiveDate::from_ymd_opt(2024, 1, 15)
         );
+    }
+
+    #[test]
+    fn test_parse_wmi_date_compact() {
+        assert_eq!(
+            parse_wmi_date("20240115"),
+            NaiveDate::from_ymd_opt(2024, 1, 15)
+        );
+    }
+
+    #[test]
+    fn test_parse_wmi_date_invalid() {
+        assert_eq!(parse_wmi_date(""), None);
+        assert_eq!(parse_wmi_date("not-a-date"), None);
+        assert_eq!(parse_wmi_date("2024"), None);
+    }
+
+    #[test]
+    fn test_parse_wmi_date_compact_non_numeric() {
+        assert_eq!(parse_wmi_date("ABCDEFGH"), None);
     }
 }

@@ -93,6 +93,7 @@ impl SoftwareScanner {
     /// }
     /// ```
     pub fn scan(&self) -> Result<Vec<Software>, Error> {
+        tracing::info!("Starting software scan");
         let mut result = Vec::new();
 
         // HKLM 64-bit
@@ -153,36 +154,49 @@ impl SoftwareScanner {
     }
 
     fn parse_software_key(&self, key: &Key, source: RegistrySource) -> Option<Software> {
-        // DisplayName is required
         let name = key.get_string("DisplayName").ok()?;
-
-        // Skip empty names
-        if name.trim().is_empty() {
-            return None;
-        }
-
         let version = key.get_string("DisplayVersion").ok();
         let publisher = key.get_string("Publisher").ok();
-        let install_location = key
-            .get_string("InstallLocation")
-            .ok()
-            .filter(|s| !s.is_empty())
-            .map(PathBuf::from);
+        let install_location = key.get_string("InstallLocation").ok();
+        let install_date_str = key.get_string("InstallDate").ok();
 
-        let install_date = key
-            .get_string("InstallDate")
-            .ok()
-            .and_then(|s| parse_install_date(&s));
-
-        Some(Software {
+        build_software(
             name,
             version,
             publisher,
-            install_date,
             install_location,
+            install_date_str,
             source,
-        })
+        )
     }
+}
+
+/// Pure construction logic for software entry (fully testable).
+fn build_software(
+    name: String,
+    version: Option<String>,
+    publisher: Option<String>,
+    install_location: Option<String>,
+    install_date_str: Option<String>,
+    source: RegistrySource,
+) -> Option<Software> {
+    if name.trim().is_empty() {
+        return None;
+    }
+
+    let install_location = install_location
+        .filter(|s| !s.is_empty())
+        .map(PathBuf::from);
+    let install_date = install_date_str.and_then(|s| parse_install_date(&s));
+
+    Some(Software {
+        name,
+        version,
+        publisher,
+        install_date,
+        install_location,
+        source,
+    })
 }
 
 /// Parse install date from registry format (YYYYMMDD).
@@ -227,5 +241,76 @@ mod tests {
             parse_install_date("99991231"),
             NaiveDate::from_ymd_opt(9999, 12, 31)
         );
+    }
+
+    #[test]
+    fn test_build_software_full() {
+        let sw = build_software(
+            "Test App".into(),
+            Some("2.0".into()),
+            Some("Acme".into()),
+            Some(r"C:\Acme".into()),
+            Some("20240115".into()),
+            RegistrySource::LocalMachine64,
+        );
+        let sw = sw.unwrap();
+        assert_eq!(sw.name, "Test App");
+        assert_eq!(sw.version.as_deref(), Some("2.0"));
+        assert_eq!(sw.publisher.as_deref(), Some("Acme"));
+        assert_eq!(sw.install_date, NaiveDate::from_ymd_opt(2024, 1, 15));
+        assert_eq!(sw.install_location, Some(PathBuf::from(r"C:\Acme")));
+        assert_eq!(sw.source, RegistrySource::LocalMachine64);
+    }
+
+    #[test]
+    fn test_build_software_empty_name_rejected() {
+        let sw = build_software(
+            "".into(),
+            None,
+            None,
+            None,
+            None,
+            RegistrySource::CurrentUser,
+        );
+        assert!(sw.is_none());
+    }
+
+    #[test]
+    fn test_build_software_whitespace_name_rejected() {
+        let sw = build_software(
+            "   ".into(),
+            None,
+            None,
+            None,
+            None,
+            RegistrySource::LocalMachine32,
+        );
+        assert!(sw.is_none());
+    }
+
+    #[test]
+    fn test_build_software_empty_install_location_filtered() {
+        let sw = build_software(
+            "App".into(),
+            None,
+            None,
+            Some("".into()), // empty string
+            None,
+            RegistrySource::LocalMachine64,
+        );
+        assert!(sw.unwrap().install_location.is_none());
+    }
+
+    #[test]
+    fn test_build_software_invalid_date_ignored() {
+        let sw = build_software(
+            "App".into(),
+            None,
+            None,
+            None,
+            Some("not-a-date".into()),
+            RegistrySource::LocalMachine64,
+        );
+        assert!(sw.unwrap().install_date.is_none());
     }
 }

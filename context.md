@@ -18,7 +18,7 @@
 * **Deployment:** Standalone User-space binary
 * **Strict Rules:**
     1. No `sudo`/Admin commands.
-    2. Scripts must be `#!/bin/sh` (BusyBox compatible).
+    2. Scripts use `#!/bin/sh` (BusyBox compatible).
     3. GUI must remain responsive during high-concurrency network scans.
 
 ---
@@ -26,9 +26,9 @@
 ## 📍 Current State (Recursive Summary)
 
 ### 🛠️ Recent Changes (Last 3 Cycles)
-1.  **2026-02-11/Publication:** Published `sysaudit` v0.1.0 to crates.io after full quality gate passing.
-2.  **2026-02-11/Documentation:** Updated `context.md` and README files for publication readiness.
-3.  **2026-02-11/MCP Integration:** Verified `rust-mcp-server` tools against the workspace.
+1.  **2026-02-17/Test Audit:** Expanded unit tests from 10 to 36. Refactored `industrial.rs` and `software.rs` to extract pure logic from registry-dependent code ("Extract & Test" pattern). Fixed operator precedence bug in industrial matching logic.
+2.  **2026-02-17/Architecture:** Created `architecture.md` as the Technical Source of Truth, concretizing rules from `GEMINI.md` and data from `DATA_SOURCES.md`.
+3.  **2026-02-17/Project Sync:** Committed and pushed `architecture.md`, `.gitignore` (ignoring `GEMINI.md`), and `Makefile` fixes to remote.
 
 ### 🧩 Active Components & APIs
 * `sysaudit/`: Core library (Published v0.1.0).
@@ -36,7 +36,7 @@
 
 ### 🛠️ Maintenance & Scripts
 * `Makefile`: Central entry point for `check`, `run`, `test`, `build`, and `verify`.
-* `scripts/verify.sh`: Comprehensive quality gate (Lint + Test + Build).
+* `scripts/test_all.sh`: Comprehensive quality gate (Lint + Test + Build).
 * `BLUEPRINT_TEMPLATE.md`: Standardized format for Architect's **Think Phase** audits (includes "Files to be modified" scope).
 
 ---
@@ -58,10 +58,18 @@
 
 ---
 
+## 🏗️ Architecture & Documentation
+* **GEMINI.md:** Operational Source of Truth (Rules & Workflows).
+* **architecture.md:** Technical Source of Truth (Project-specific concretization).
+* **context.md:** Contextual Source of Truth (History & Decisions).
+* **DATA_SOURCES.md:** Reference for Windows Registry/WMI/API sources.
+
+---
+
 ## 🧪 Verification Commands
 ```bash
-# Full Quality Gate
-make verify
+# Full Quality Gate (lint + test + format check)
+make check
 
 # Manual Lint Check (Sequential)
 cargo fmt -- --check

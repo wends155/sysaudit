@@ -72,6 +72,7 @@ impl SystemInfo {
     /// println!("Computer: {}", info.computer_name);
     /// ```
     pub fn collect() -> Result<Self, Error> {
+        tracing::info!("Starting system information collection");
         let mut sys = System::new_all();
         sys.refresh_all();
 
