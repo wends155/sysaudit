@@ -26,35 +26,35 @@
 ## 📍 Current State (Recursive Summary)
 
 ### 🛠️ Recent Changes (Last 3 Cycles)
-1.  **2026-02-17/Test Audit:** Expanded unit tests from 10 to 36. Refactored `industrial.rs` and `software.rs` to extract pure logic from registry-dependent code ("Extract & Test" pattern). Fixed operator precedence bug in industrial matching logic.
-2.  **2026-02-17/Architecture:** Created `architecture.md` as the Technical Source of Truth, concretizing rules from `GEMINI.md` and data from `DATA_SOURCES.md`.
-3.  **2026-02-17/Project Sync:** Committed and pushed `architecture.md`, `.gitignore` (ignoring `GEMINI.md`), and `Makefile` fixes to remote.
+1.  **2026-02-17/Architecture:** Created `architecture.md` as the Technical Source of Truth, concretizing rules from `GEMINI.md` and data from `DATA_SOURCES.md`.
+2.  **2026-02-17/Project Sync:** Committed and pushed `architecture.md`, `.gitignore`, and `Makefile` fixes to remote.
+3.  **2026-02-17/BDD Specs:** Implemented BDD testing using `rstest-bdd 0.5.0` in a new `specs` workspace crate. Created 7 features and 100+ step definitions. Integrated `cargo-bdd` for diagnostics.
 
 ### 🧩 Active Components & APIs
 * `sysaudit/`: Core library (Published v0.1.0).
 * `sysaudit-cli/`: CLI consumer (Local-only).
+* `specs/`: BDD integration tests (Requires `rstest-bdd 0.5.0`).
 
 ### 🛠️ Maintenance & Scripts
 * `Makefile`: Central entry point for `check`, `run`, `test`, `build`, and `verify`.
+* `cargo-bdd`: Diagnostic tool for `specs` crate (run via `cargo-bdd steps` or `cargo-bdd duplicates`).
 * `scripts/test_all.sh`: Comprehensive quality gate (Lint + Test + Build).
-* `BLUEPRINT_TEMPLATE.md`: Standardized format for Architect's **Think Phase** audits (includes "Files to be modified" scope).
 
 ---
 
 ### 💻 Shell & Tooling Quirks
-* **PowerShell `&&` Limitation:** The default shell on this host (PowerShell) does not support `&&` as a statement separator.
-    * **Solution:** Run commands sequentially in separate tool calls. **NEVER** use `&&` in `run_command` tools on Windows hosts; use `;` or separate tool calls instead.
+* **rstest-bdd Uniqueness:** Step strings must be globally unique across all `*_steps.rs` files in the `specs` crate. Duplicate strings cause runtime panics due to `LazyLock` poisoning.
 
 ---
 
 ## 📜 Decision Log (The "Why")
-* **2026-02-11:** Substituted `rust-mcp-server` for local cargo commands to leverage unified MCP interface for build/quality cycles.
-* **2026-02-11:** workspace-level formatting requires `--all` flag in `cargo fmt` to target all members.
+* **2026-02-17:** Adopted `rstest-bdd 0.5.0` over `0.1.x` as the latter does not exist on crates.io.
+* **2026-02-17:** Opted for independent step functions over a central `World` struct to minimize boilerplate and leverage `rstest` fixture injection.
 
 ---
 
 ## 🚧 Technical Debt & Pending Logic
-* **Next Steps:** Integrate full WMI system audits and expand industrial software vendor lists.
+* **Next Steps:** Expand hardware metric coverage and finalize CSV/JSON export alignment across all data types.
 
 ---
 
