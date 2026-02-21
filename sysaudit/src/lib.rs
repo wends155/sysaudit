@@ -26,14 +26,36 @@
 //! ```
 
 pub mod error;
+#[cfg(feature = "local")]
+pub mod local;
+#[cfg(feature = "remote")]
+pub mod remote;
+pub mod scanner;
+
+#[cfg(feature = "local")]
 pub mod industrial;
+#[cfg(feature = "local")]
 pub mod output;
+#[cfg(feature = "local")]
 pub mod software;
+#[cfg(feature = "local")]
 pub mod system;
+#[cfg(feature = "local")]
 pub mod updates;
 
 pub use error::Error;
+pub use scanner::{ScanError, Scanner};
+
+#[cfg(feature = "local")]
+pub use local::LocalScanner;
+#[cfg(feature = "remote")]
+pub use remote::RemoteScanner;
+
+#[cfg(feature = "local")]
 pub use industrial::{IndustrialScanner, IndustrialSoftware, Vendor};
+#[cfg(feature = "local")]
 pub use software::{RegistrySource, Software, SoftwareScanner};
+#[cfg(feature = "local")]
 pub use system::{NetworkInterface, SystemInfo};
+#[cfg(feature = "local")]
 pub use updates::WindowsUpdate;
