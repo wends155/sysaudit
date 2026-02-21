@@ -92,6 +92,10 @@ impl SoftwareScanner {
     ///     println!("{}", sw.name);
     /// }
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error`] if the Windows registry cannot be opened.
     pub fn scan(&self) -> Result<Vec<Software>, Error> {
         tracing::info!("Starting software scan");
         let mut result = Vec::new();

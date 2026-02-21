@@ -97,6 +97,10 @@ impl IndustrialScanner {
     ///     println!("{}: {}", sw.vendor, sw.product);
     /// }
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error`] if the Windows registry cannot be opened.
     pub fn scan(&self) -> Result<Vec<IndustrialSoftware>, Error> {
         tracing::info!(
             "Scanning for industrial software (vendors: {:?})",

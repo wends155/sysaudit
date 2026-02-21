@@ -18,7 +18,7 @@ pub struct HttpWinrmTransport {
     host: String,
     port: u16,
     use_https: bool,
-    cert_sn: bool, // skip_cert_verify
+    skip_cert_verify: bool,
     username: String,
     password: SecretString,
     timeout: Duration,
@@ -26,6 +26,11 @@ pub struct HttpWinrmTransport {
 }
 
 impl HttpWinrmTransport {
+    /// Create a new HTTP WinRM transport.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ScanError::RemoteConnection`] if the HTTP client cannot be built.
     pub fn new(
         host: String,
         port: u16,
@@ -48,7 +53,7 @@ impl HttpWinrmTransport {
             host,
             port,
             use_https,
-            cert_sn: skip_cert_verify,
+            skip_cert_verify,
             username,
             password,
             timeout,

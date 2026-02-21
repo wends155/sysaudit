@@ -12,6 +12,7 @@ use sysaudit_common::{
 pub struct LocalScanner;
 
 impl Scanner for LocalScanner {
+    #[tracing::instrument(skip(self))]
     async fn scan(&self) -> Result<SysauditReport, ScanError> {
         let system_info = SystemInfo::collect()?;
         let software = SoftwareScanner::new().scan()?;
@@ -81,5 +82,30 @@ impl Scanner for LocalScanner {
             industrial: industrial_dto,
             timestamp: chrono::Utc::now(),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::scanner::Scanner;
+
+    #[tokio::test]
+    async fn test_local_scanner_produces_report() {
+        let scanner = LocalScanner;
+        let report = scanner.scan().await;
+        assert!(
+            report.is_ok(),
+            "LocalScanner should succeed on a Windows machine"
+        );
+        let report = report.unwrap();
+        assert!(
+            !report.system.host_name.is_empty(),
+            "host_name should not be empty"
+        );
+        assert!(
+            !report.system.os_name.is_empty(),
+            "os_name should not be empty"
+        );
     }
 }

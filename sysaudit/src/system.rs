@@ -71,6 +71,11 @@ impl SystemInfo {
     /// let info = SystemInfo::collect().unwrap();
     /// println!("Computer: {}", info.computer_name);
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error`] if the Windows registry cannot be opened or read.
+    #[tracing::instrument]
     pub fn collect() -> Result<Self, Error> {
         tracing::info!("Starting system information collection");
         let mut sys = System::new_all();
@@ -143,12 +148,18 @@ impl SystemInfo {
 
         let com_con = match COMLibrary::new() {
             Ok(c) => c,
-            Err(_) => return (None, None),
+            Err(e) => {
+                tracing::warn!(error = %e, "COM init failed for system model info");
+                return (None, None);
+            }
         };
 
         let wmi_con = match WMIConnection::new(com_con) {
             Ok(c) => c,
-            Err(_) => return (None, None),
+            Err(e) => {
+                tracing::warn!(error = %e, "WMI connection failed for system model info");
+                return (None, None);
+            }
         };
 
         match wmi_con.query::<Win32ComputerSystem>() {
@@ -159,7 +170,10 @@ impl SystemInfo {
                     (None, None)
                 }
             }
-            Err(_) => (None, None),
+            Err(e) => {
+                tracing::warn!(error = %e, "WMI query failed for system model info");
+                (None, None)
+            }
         }
     }
 

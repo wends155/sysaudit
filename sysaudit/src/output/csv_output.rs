@@ -8,6 +8,10 @@ pub struct CsvExporter;
 
 impl CsvExporter {
     /// Export software list to CSV.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error`] if the file cannot be created or written.
     pub fn export_software(software: &[Software], path: &Path) -> Result<(), Error> {
         let mut wtr = csv::Writer::from_path(path)?;
 
@@ -39,6 +43,10 @@ impl CsvExporter {
     }
 
     /// Export industrial software to CSV.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error`] if the file cannot be created or written.
     pub fn export_industrial(software: &[IndustrialSoftware], path: &Path) -> Result<(), Error> {
         let mut wtr = csv::Writer::from_path(path)?;
 
@@ -61,6 +69,10 @@ impl CsvExporter {
     }
 
     /// Export Windows updates to CSV.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error`] if the file cannot be created or written.
     pub fn export_updates(updates: &[WindowsUpdate], path: &Path) -> Result<(), Error> {
         let mut wtr = csv::Writer::from_path(path)?;
 
